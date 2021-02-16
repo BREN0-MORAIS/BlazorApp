@@ -1,0 +1,98 @@
+﻿@page "/"
+@inject HttpClient htttp
+
+<h6 style="color:red;">@Menssagem</h6>
+@if (Tarefas == null)
+{
+    <p>Carregando</p>
+}
+else if (!Tarefas.Any())
+{
+
+
+    <p>Ainda Não existem Tarefas</p>
+}
+else
+{
+
+    @if (Tarefas != null)
+    {
+        <div class="form-group">
+            <label>Tarefa</label>
+            <input type="text" placeholder="informe a Tarefa" @bind="NovaTarefa" />
+            <button class="btn btn-primary" @onclick="AdicionarNovaTarefa">Adicionar Tarefa</button>
+        </div>
+    }
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Concluida</th>
+                <th>Ação</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Tarefas)
+            {
+                <tr>
+                    <td>@item.Descricao </td>
+                    <td>@item.DataCriacao </td>
+                    <!--Por padrão o checkebox manda false ou true com bind visualiza isso em tempo real----->
+                    <td><input type="checkbox" @bind="item.Concluida" />@item.Concluida </td>
+                    <td><button @onclick="@(()=> RemoverTarefa(item.Id))">Excluir</button> </td>
+
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+
+@code{
+    protected override async Task OnInitializedAsync()
+    {
+        Tarefas = await htttp.GetFromJsonAsync<List<Tarefa>>("Data/Tarefas.json");
+    }
+    private string Menssagem = "";
+    public class Tarefa
+    {
+        public Guid Id { get; set; }
+        public string Descricao { get; set; }
+        public bool Concluida { get; set; }
+        public DateTime DataCriacao { get; set; }
+    }
+
+    private string NovaTarefa = "";
+
+    public void AdicionarNovaTarefa()
+    {
+        Tarefa tarefas = new Tarefa();
+        tarefas.Descricao = NovaTarefa;
+        tarefas.DataCriacao = DateTime.Now;
+        tarefas.Id = Guid.NewGuid();
+
+        if (!string.IsNullOrWhiteSpace(NovaTarefa))
+        {
+            Tarefas.Add(tarefas);
+        }
+        else
+        {
+            Menssagem = "Tarefa Vazia";
+        }
+
+        NovaTarefa = "";
+
+    }
+
+    public void RemoverTarefa(Guid id)
+    {
+        Tarefa tarefa = Tarefas.FirstOrDefault(a => a.Id == id);
+
+        Tarefas.Remove(tarefa);
+    }
+    private List<Tarefa> Tarefas = new List<Tarefa>();
+}
